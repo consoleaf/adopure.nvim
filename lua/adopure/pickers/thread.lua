@@ -24,9 +24,14 @@ local thread_previewer = require("telescope.previewers").new_buffer_previewer({
 ---@param entry adopure.AdoThread
 ---@return adopure.ThreadEntry
 local function entry_maker(entry)
+    local date = require("adopure.utils").format_ado_date(
+        entry.lastUpdatedDate or entry.publishedDate,
+        "%m-%d %H:%M"
+    )
+    local prefix = date ~= "" and date .. "  " or ""
     return {
         value = entry,
-        display = entry.comments[1].content,
+        display = prefix .. entry.comments[1].content,
         ordinal = entry.comments[1].content,
     }
 end

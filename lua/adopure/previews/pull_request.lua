@@ -3,10 +3,7 @@ local M = {}
 local namespace = vim.api.nvim_create_namespace("adopure")
 
 function M.readable_timestamp(iso_str)
-    local pattern = "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)"
-    local year, month, day, hour, minute, seconds = iso_str:match(pattern)
-    local timestamp = os.time({ year = year, month = month, day = day, hour = hour, min = minute, sec = seconds })
-    return os.date("%c", timestamp)
+    return require("adopure.utils").format_ado_date(iso_str, "%c")
 end
 
 local function get_subtitle_table(pull_request)

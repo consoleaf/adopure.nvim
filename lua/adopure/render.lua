@@ -3,6 +3,8 @@ local buffer_counter = 0
 
 local namespace = vim.api.nvim_create_namespace("adopure-render")
 
+local format_ado_date = require("adopure.utils").format_ado_date
+
 local function rightsize_window()
     local extmarks = vim.api.nvim_buf_get_extmarks(0, namespace, 0, -1, { details = true })
     local line_count = 0
@@ -108,13 +110,23 @@ function M.render_reply_thread(pull_request_thread)
             { "Status: ", "@text.strong" },
             { icons[pull_request_thread.status] .. " - [" .. pull_request_thread.status .. "]", "@text.reference" },
         },
+        {
+            { "Last updated: ", "@text.strong" },
+            {
+                format_ado_date(pull_request_thread.lastUpdatedDate or pull_request_thread.publishedDate),
+                "@text.comment",
+            },
+        },
         { { "", "@text.literal" } },
         { { "Comments: ", "@text.strong" } },
     }
 
     for _, comment in ipairs(pull_request_thread.comments) do
         if not comment.isDeleted then
-            table.insert(lines, { { comment.author.displayName, "@text.reference" } })
+            table.insert(lines, {
+                { comment.author.displayName, "@text.reference" },
+                { "  " .. format_ado_date(comment.publishedDate), "@text.comment" },
+            })
 
             for _, split_code_blocks in pairs(vim.split(comment.content, string.char(10))) do
                 for _, line in pairs(split_long_lines(split_code_blocks)) do

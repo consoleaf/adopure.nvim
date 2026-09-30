@@ -41,9 +41,11 @@ local function entry_maker(entry)
     if votes == "" then
         votes = nil
     end
+    local date = require("adopure.utils").format_ado_date(entry.creationDate, "%m-%d %H:%M")
+    local prefix = date ~= "" and date .. "  " or ""
     return {
         value = entry,
-        display = entry.title .. " - " .. (votes or "󰇘 ") .. (entry.isDraft and "[isDraft]" or ""),
+        display = prefix .. entry.title .. " - " .. (votes or "󰇘 ") .. (entry.isDraft and "[isDraft]" or ""),
         ordinal = entry.title,
     }
 end
