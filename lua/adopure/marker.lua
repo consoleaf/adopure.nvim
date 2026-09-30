@@ -114,4 +114,18 @@ function M.get_extmarks_at_position()
     return vim.api.nvim_buf_get_extmarks(0, namespace, { line, 0 }, { line + 1, 0 }, {})
 end
 
+---Get all comment thread marks in a buffer, ordered by position.
+---@param bufnr number|nil buffer handle; defaults to the current buffer
+---@return table<number, number, number>[]: extmark_id, row, col
+function M.get_comment_marks(bufnr)
+    local marks = vim.api.nvim_buf_get_extmarks(bufnr or 0, namespace, 0, -1, {})
+    table.sort(marks, function(a, b)
+        if a[2] == b[2] then
+            return a[3] < b[3]
+        end
+        return a[2] < b[2]
+    end)
+    return marks
+end
+
 return M

@@ -21,7 +21,7 @@
 ---     *threads*: Fetch comment threads from Azure DevOps.
 ---
 --->vim
---- :AdoPure [ open ] [ quickfix | thread_picker | new_thread | existing_thread ] [ opts ]
+--- :AdoPure [ open ] [ quickfix | thread_picker | new_thread | existing_thread | next_comment | prev_comment ] [ opts ]
 ---<
 ---Opens specified argument in the editor.
 ---
@@ -35,6 +35,12 @@
 ---     *new_thread*: Opens a window to write a comment on code selection.
 ---
 ---     *existing_thread*: Opens a window with an existing comment thread.
+---
+---     *next_comment*: Jump to the next comment thread.
+---     Continues into the next file when reviewing in diffview.
+---
+---     *prev_comment*: Jump to the previous comment thread.
+---     Continues into the previous file when reviewing in diffview.
 ---
 --->vim
 --- :AdoPure [ submit ] [ comment | vote | thread_status | delete_comment | edit_comment ] [ opts ]
@@ -150,7 +156,7 @@ local subcommand_tbl = {
         end,
     },
     open = {
-        complete_args = { "quickfix", "thread_picker", "new_thread", "existing_thread" },
+        complete_args = { "quickfix", "thread_picker", "new_thread", "existing_thread", "next_comment", "prev_comment" },
         impl = function(args)
             local sub_impl = {
                 quickfix = function(opts)
@@ -164,6 +170,12 @@ local subcommand_tbl = {
                 end,
                 existing_thread = function(opts)
                     require("adopure.thread").open_thread_window(adopure.get_loaded_state(), opts)
+                end,
+                next_comment = function(opts)
+                    require("adopure.navigation").jump_to_next_comment(adopure.get_loaded_state(), opts)
+                end,
+                prev_comment = function(opts)
+                    require("adopure.navigation").jump_to_prev_comment(adopure.get_loaded_state(), opts)
                 end,
             }
             execute_or_prompt(sub_impl, args, "open")
