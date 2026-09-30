@@ -1,23 +1,86 @@
 local M = {}
 
+local remote_markers = { "azure.com", "visualstudio.com", "ssh://", "@ssh", "_git/" }
+
 ---@param remote_stdout string[]
 ---@return string remote
 local function elect_remote(remote_stdout)
     local preferred_remotes = require("adopure.config.internal").preferred_remotes
     for _, remote_line in ipairs(remote_stdout) do
-        local name_and_details = vim.split(remote_line, "\t")
-        local remote_name = name_and_details[1]
+        local remote_name = vim.split(remote_line, "\t")[1]
         if vim.tbl_contains(preferred_remotes, remote_name) then
             return remote_line
         end
     end
     for _, remote_line in ipairs(remote_stdout) do
-        if remote_line:find("azure.com") or remote_line:find("visualstudio.com") then
-            return remote_line
+        for _, marker in ipairs(remote_markers) do
+            if remote_line:find(marker, 1, true) then
+                return remote_line
+            end
         end
     end
     vim.notify("adopure unable to elect azure devops remote url; taking the first", 3)
     return remote_stdout[1]
+end
+
+---Parse any Azure DevOps remote url into api parts. Handles cloud and
+---on-prem (Azure DevOps Server / TFS) remotes in ssh, scp-like and https form:
+---  ssh://[user@]host[:port]/v3/org/project/repo                  (cloud)
+---  ssh://[user@]host[:port]/[vdir/]collection/project/_git/repo  (on-prem)
+---  user@host:v3/org/project/repo                                 (cloud, scp-like)
+---  user@host:[vdir/]collection/project/_git/repo                 (on-prem, scp-like)
+---  https://[user@]host[:port]/[vdir/]collection/project/_git/repo
+---  https://org.visualstudio.com/project/_git/repo
+---Ssh ports are dropped (the api is served over https), https ports are kept.
+---@param url string
+---@return string|nil organization_url
+---@return string|nil project_name
+---@return string|nil repository_name
+local function parse_remote_url(url)
+    local rest, is_ssh
+    if url:find("^ssh://") then
+        rest, is_ssh = url:sub(7), true
+    elseif url:find("^https?://") then
+        rest = url:gsub("^https?://", "")
+    elseif url:find("@") and url:find(":") then
+        -- scp-like syntax: rewrite "user@host:path" into "host/path"
+        rest, is_ssh = url:gsub("^[^@]+@", ""):gsub(":", "/", 1), true
+    else
+        return nil
+    end
+    rest = rest:gsub("^[^/@]+@", "")
+    local authority = rest:match("^([^/]+)")
+    if not authority then
+        return nil
+    end
+    local path = rest:sub(#authority + 1):gsub("^/", "", 1)
+    local host, port = authority:match("^([^:]+):(%d+)$")
+    if host then
+        authority = host .. (is_ssh and "" or ":" .. port)
+    end
+    local segs = vim.split(path, "/")
+    local organization_url, project_name, repository_name
+    if segs[1] == "v3" and segs[2] and segs[3] and segs[4] then
+        organization_url = "https://" .. authority:gsub("^ssh%.", "") .. "/" .. segs[2] .. "/"
+        project_name = segs[3]
+        repository_name = segs[4]
+    elseif segs[4] == "_git" and segs[2] and segs[3] and segs[5] then
+        -- on-prem with virtual directory: vdir/collection/project/_git/repo
+        organization_url = "https://" .. authority .. "/" .. segs[1] .. "/" .. segs[2] .. "/"
+        project_name = segs[3]
+        repository_name = segs[5]
+    elseif segs[3] == "_git" and segs[1] and segs[2] and segs[4] then
+        -- cloud https or on-prem without virtual directory: collection/project/_git/repo
+        organization_url = "https://" .. authority .. "/" .. segs[1] .. "/"
+        project_name = segs[2]
+        repository_name = segs[4]
+    elseif segs[2] == "_git" and segs[1] and segs[3] then
+        -- visualstudio.com form: the organization is the host prefix
+        organization_url = "https://" .. authority .. "/"
+        project_name = segs[1]
+        repository_name = segs[3]
+    end
+    return organization_url, project_name, repository_name
 end
 
 ---@param remote_stdout string
@@ -27,22 +90,12 @@ end
 ---@return string repository_name
 ---@return string root_path
 local function extract_git_details(remote_stdout, root_path)
-    local host, project_name, repository_name, organization_name
     local url_with_type = vim.split(remote_stdout, "\t")[2]
     local url = vim.split(url_with_type, " ")[1]
-    if url:find("@ssh") then
-        local ssh_base
-        ssh_base, organization_name, project_name, repository_name = unpack(vim.split(url, "/"))
-        host = vim.split(vim.split(ssh_base, ":")[1], "@ssh.")[2]
+    local organization_url, project_name, repository_name = parse_remote_url(url)
+    if not organization_url then
+        error("adopure could not parse azure devops remote url: " .. url)
     end
-    if remote_stdout:find("https://") then
-        local https_base, user_domain
-        https_base, repository_name = unpack(vim.split(url, "/_git/"))
-        user_domain, organization_name, project_name = unpack(vim.split(https_base, "/"), 3)
-        local user_at_host_parts = vim.split(user_domain, "@")
-        host = user_at_host_parts[#user_at_host_parts]
-    end
-    local organization_url = table.concat({ "https://", host, "/", organization_name, "/" })
     return organization_url, project_name, repository_name, root_path
 end
 
