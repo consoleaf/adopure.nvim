@@ -7,6 +7,7 @@ Table of Contents                                             *adopure.contents*
  ················································· |adopure.types.state_manager|
  ······························································ |adopure.thread|
  ···························································· |adopure.quickfix|
+ ·························································· |adopure.navigation|
  ······················································ |adopure.pickers.thread|
  ······························································ |adopure.review|
 
@@ -31,7 +32,7 @@ Loads specified argument into state.
      *threads*: Fetch comment threads from Azure DevOps.
 
 >vim
- :AdoPure [ open ] [ quickfix | thread_picker | new_thread | existing_thread ] [ opts ]
+ :AdoPure [ open ] [ quickfix | thread_picker | new_thread | existing_thread | next_comment | prev_comment ] [ opts ]
 <
 Opens specified argument in the editor.
 
@@ -45,6 +46,12 @@ Opens specified argument in the editor.
      *new_thread*: Opens a window to write a comment on code selection.
 
      *existing_thread*: Opens a window with an existing comment thread.
+
+     *next_comment*: Jump to the next comment thread.
+     Continues into the next file when reviewing in diffview.
+
+     *prev_comment*: Jump to the previous comment thread.
+     Continues into the previous file when reviewing in diffview.
 
 >vim
  :AdoPure [ submit ] [ comment | vote | thread_status | delete_comment | edit_comment ] [ opts ]
@@ -131,6 +138,15 @@ adopure.Highlights                                          *adopure.Highlights*
         {inactive_sign?}  (string)  Highlight for sign indicating in active comments.
 
 
+adopure.Keymaps                                                *adopure.Keymaps*
+
+    Fields: ~
+        {next_comment?}  (string|false)  Keybinding to jump to the next comment thread; buffer local while a pull
+                                         request is active. Set to false to disable.
+        {prev_comment?}  (string|false)  Keybinding to jump to the previous comment thread; buffer local while a pull
+                                         request is active. Set to false to disable.
+
+
 adopure.Config                                                  *adopure.Config*
 
     Fields: ~
@@ -144,6 +160,7 @@ adopure.Config                                                  *adopure.Config*
                                                           2. Any Azure DevOps remote.
                                                           3. Any remote. If the remote is not an Azure DevOps remote, the plugin will not work.
         {filter_my_pull_requests?}  (boolean)             Fetches only pull requests assigned to me, my team or created by me.
+        {keymaps?}                  (adopure.Keymaps)     Buffer local keymaps set on review buffers while a pull request is active.
 
 
 ==============================================================================
@@ -206,6 +223,44 @@ M.submit_comment({state}, {_})                                *M.submit_comment*
 M.render_quickfix({state}, {_})                              *M.render_quickfix*
     Render pull request threads in quickfix panel.
     This allows for a workflow of quickly jumping to various comment threads in the code.
+
+    Parameters: ~
+        {state}  (adopure.AdoState)
+        {_}      (table)
+
+
+==============================================================================
+                                                            *adopure.navigation*
+
+Navigation between comment thread marks.
+Marks are placed by the plugin on files that have active comment threads,
+including the right-hand side files opened by diffview.
+
+Jump to the next or previous comment thread:
+>vim
+ :AdoPure open next_comment
+ :AdoPure open prev_comment
+<
+When the current file has no further thread in the chosen direction and the
+current window is part of a diffview session, the navigation continues into
+the next (or previous) file of the diffview file panel.
+While a pull request is active, the plugin sets buffer local keymaps for
+both directions (default: `]t` and `[t`; see |adopure.config.meta|).
+
+M.jump_to_next_comment({state}, {_})                    *M.jump_to_next_comment*
+    Jump to the next comment thread in the current file.
+    When in diffview and no further threads exist in the current file,
+    continues into the next file that has comment threads.
+
+    Parameters: ~
+        {state}  (adopure.AdoState)
+        {_}      (table)
+
+
+M.jump_to_prev_comment({state}, {_})                    *M.jump_to_prev_comment*
+    Jump to the previous comment thread in the current file.
+    When in diffview and no earlier threads exist in the current file,
+    continues into the previous file that has comment threads.
 
     Parameters: ~
         {state}  (adopure.AdoState)

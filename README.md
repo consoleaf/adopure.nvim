@@ -34,7 +34,7 @@ For all available config options see:
 
 ```vimL
 :AdoPure    [ load ] [ context | threads ] [ opts ]
-            [ open ] [ quickfix | thread_picker | new_thread | existing_thread ] [ opts ]
+            [ open ] [ quickfix | thread_picker | new_thread | existing_thread | next_comment | prev_comment ] [ opts ]
             [ submit ] [ comment | vote | thread_status | delete_comment | edit_comment ] [ opts ]
 ```
 
@@ -48,6 +48,8 @@ open    | <i>             | Opens specified argument in the editor.
 <i>     | thread_picker   | Open a picker with all comment threads.
 <i>     | new_thread      | Opens a window to write a comment on code selection.
 <i>     | existing_thread | Opens a window with an existing comment thread.
+<i>     | next_comment    | Jump to the next comment thread; continues into the next file when reviewing in diffview.
+<i>     | prev_comment    | Jump to the previous comment thread; continues into the previous file when reviewing in diffview.
 submit  | <i>             | Submits specified argument to Azure DevOps.
 <i>     | comment         | Submit new comment or reply; must be in new_thread or existing_thread window.
 <i>     | vote            | Submit a new vote on the pull request.
@@ -74,6 +76,23 @@ set_keymap("<leader>asv", "AdoPure submit vote")
 set_keymap("<leader>ast", "AdoPure submit thread_status")
 set_keymap("<leader>asd", "AdoPure submit delete_comment")
 set_keymap("<leader>ase", "AdoPure submit edit_comment")
+```
+
+While a pull request is active, the plugin also sets buffer local keymaps on
+review buffers (repository files and diffview buffers) to jump between comment
+threads; `]t` for the next thread and `[t` for the previous thread. They can
+also be used from the command line as `AdoPure open next_comment` and
+`AdoPure open prev_comment`. When the last thread of a file is reached, the
+navigation continues into the next (or previous) file of the diffview file
+panel. The bindings can be changed or disabled via config:
+
+```lua
+vim.g.adopure = {
+    keymaps = {
+        next_comment = "]t", -- set to false to disable
+        prev_comment = "[t", -- set to false to disable
+    },
+}
 ```
 
 ## Showcase
