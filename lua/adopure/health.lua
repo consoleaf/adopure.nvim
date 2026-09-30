@@ -3,9 +3,13 @@ local function check_pat_token()
     local ok, response = pcall(function()
         return require("adopure.config.internal"):access_token()
     end)
-    if not ok then
-        vim.health.error(tostring(response))
-        return false
+    if not ok or not response then
+        vim.health.warn(
+            "No pat_token configured; requests will be sent without an"
+                .. " Authorization header. This only works when authentication"
+                .. " is injected upstream (e.g. a corporate Kerberos proxy)."
+        )
+        return true
     end
     vim.health.ok("Pat token present;")
     return true

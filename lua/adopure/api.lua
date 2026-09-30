@@ -4,25 +4,53 @@ local config = require("adopure.config.internal")
 
 local GIT_API_VERSION = "api-version=7.1"
 
-local access_token = config:access_token()
 local organization_url = ""
 local project_name = ""
 
-local headers = {
-    ["Authorization"] = "basic " .. access_token,
-    ["Content-Type"] = "application/json",
-}
+local warned_no_pat = false
+
+---Request headers. The Authorization header is omitted when no pat is
+---configured, for setups where authentication is injected upstream
+---(e.g. a corporate proxy adding Kerberos/Windows auth to requests).
+---@return table
+local function get_headers()
+    if not warned_no_pat and not config.pat_token then
+        warned_no_pat = true
+        vim.notify(
+            "adopure: no pat_token configured; sending unauthenticated requests",
+            vim.log.levels.INFO
+        )
+    end
+    local request_headers = { ["Content-Type"] = "application/json" }
+    local token = config:access_token()
+    if token then
+        request_headers["Authorization"] = "basic " .. token
+    end
+    return request_headers
+end
+
+---Extra curl options from config. `proxy` is passed through to curl as
+---`--proxy "[protocol://]host[:port]"`; proxy environment variables
+---(HTTPS_PROXY/HTTP_PROXY) are honored by curl itself and need no setting.
+---@return table
+local function get_curl_options()
+    local opts = {}
+    if config.proxy and config.proxy ~= "" then
+        opts.proxy = config.proxy
+    end
+    return opts
+end
 
 ---Get request from azure devops
 ---@param url string
 ---@param request_type string
 ---@return any|nil result, string|nil err
 local function get_azure_devops(url, request_type)
-    local ok, response = pcall(curl.request, {
+    local ok, response = pcall(curl.request, vim.tbl_extend("force", {
         url = url,
         method = "get",
-        headers = headers,
-    })
+        headers = get_headers(),
+    }, get_curl_options()))
     if not ok or not response or response.status ~= 200 then
         local details = ""
         if response then
@@ -154,12 +182,12 @@ end
 ---@param request_type string
 ---@return any|nil result, string|nil err
 local function submit_azure_devops(url, http_verb, request_type, body)
-    local ok, response = pcall(curl.request, {
+    local ok, response = pcall(curl.request, vim.tbl_extend("force", {
         url = url,
         method = http_verb,
-        headers = headers,
+        headers = get_headers(),
         body = vim.fn.json_encode(body),
-    })
+    }, get_curl_options()))
     if not ok or not response or response.status ~= 200 then
         local details = ""
         if response then

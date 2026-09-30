@@ -6,6 +6,7 @@
 
 ---@class adopure.InternalConfig
 ---@field pat_token string|nil
+---@field proxy string|nil
 ---@field hl_groups adopure.InternalHighlights
 ---@field preferred_remotes string[]
 ---@field filter_my_pull_requests boolean
@@ -14,6 +15,7 @@ local InternalConfig = {}
 function InternalConfig:new()
     local default_config = {
         pat_token = os.getenv("AZURE_DEVOPS_EXT_PAT"),
+        proxy = nil,
         hl_groups = {
             active = "DiagnosticUnderlineWarn",
             active_sign = "@comment.todo",
@@ -31,12 +33,9 @@ function InternalConfig:new()
 end
 
 function InternalConfig:access_token()
-    local message = table.concat({
-        "No pat_token found in config.",
-        "Set AZURE_DEVOPS_EXT_PAT environment variable,",
-        "or check the docs to find other ways of configuring it.",
-    }, " ")
-    assert(self.pat_token, message)
+    if not self.pat_token then
+        return nil
+    end
     return vim.base64.encode(":" .. self.pat_token)
 end
 
