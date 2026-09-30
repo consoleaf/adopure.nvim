@@ -22,6 +22,14 @@
 ---@field inactive? string Highlight for lines with inactive comments.
 ---@field inactive_sign? string Highlight for sign indicating in active comments.
 
+---@class adopure.Keymaps
+---Keybinding to jump to the next comment thread; buffer local while a pull
+---request is active. Set to false to disable.
+---@field next_comment? string|false
+---Keybinding to jump to the previous comment thread; buffer local while a pull
+---request is active. Set to false to disable.
+---@field prev_comment? string|false
+
 ---@class adopure.Config
 ---If not provided, attempt to use AZURE_DEVOPS_EXT_PAT environment variable.
 ---If no environment variable is set, and no config is provided, the plugin will not work.
@@ -34,6 +42,8 @@
 ---3. Any remote. If the remote is not an Azure DevOps remote, the plugin will not work.
 ---@field preferred_remotes? string[]
 ---@field filter_my_pull_requests? boolean Fetches only pull requests assigned to me, my team or created by me.
+---Buffer local keymaps set on review buffers while a pull request is active.
+---@field keymaps? adopure.Keymaps
 
 local config = {}
 

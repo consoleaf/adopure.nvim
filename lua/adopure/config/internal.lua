@@ -9,6 +9,7 @@
 ---@field hl_groups adopure.InternalHighlights
 ---@field preferred_remotes string[]
 ---@field filter_my_pull_requests boolean
+---@field keymaps adopure.Keymaps
 
 local InternalConfig = {}
 function InternalConfig:new()
@@ -22,6 +23,10 @@ function InternalConfig:new()
         },
         preferred_remotes = {},
         filter_my_pull_requests = false,
+        keymaps = {
+            next_comment = "]t",
+            prev_comment = "[t",
+        },
     }
     local user_config = type(vim.g.adopure) == "function" and vim.g.adopure() or vim.g.adopure or {}
     local config = vim.tbl_deep_extend("force", default_config, user_config or {})
