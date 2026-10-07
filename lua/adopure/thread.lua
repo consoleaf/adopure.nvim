@@ -53,6 +53,38 @@ end
 ---@param state adopure.AdoState
 ---@param _ table
 function M.new_thread_window(state, _)
+    open_new_thread_window(state, nil)
+end
+
+---Builds the suggested-edit comment body for the selected lines.
+---The fenced block carries the full replacement of the anchored range;
+---an empty block proposes deletion. Edit the block before submitting.
+---@param selection string[]
+---@return string[]
+function M.build_suggestion_prefill(selection)
+    local lines = { "```suggestion" }
+    vim.iter(selection):each(function(line)
+        table.insert(lines, line)
+    end)
+    table.insert(lines, "```")
+    return lines
+end
+
+---Opens a new comment thread window prefilled with a suggested edit for
+---the selected lines. Make a selection to suggest a replacement for, then
+---call this; edit the block and submit to create the thread.
+---@param state adopure.AdoState
+---@param _ table
+function M.suggest_window(state, _)
+    local line_start, col_start, line_end, col_end = get_selected_position()
+    local selection = vim.api.nvim_buf_get_text(0, line_start, col_start, line_end, col_end, {})
+    open_new_thread_window(state, M.build_suggestion_prefill(selection))
+end
+
+---@private
+---@param state adopure.AdoState
+---@param prefill string[]|nil
+local function open_new_thread_window(state, prefill)
     local line_start, col_start, line_end, col_end = get_selected_position()
     local selection = vim.api.nvim_buf_get_text(0, line_start, col_start, line_end, col_end, {})
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", false, true, true), "nx", false)
@@ -62,7 +94,7 @@ function M.new_thread_window(state, _)
     end
     local thread_context = get_thread_context(state, col_end, col_start, line_end, line_start)
 
-    local bufnr, mark_id = require("adopure.render").render_new_thread(selection)
+    local bufnr, mark_id = require("adopure.render").render_new_thread(selection, prefill)
 
     local comment_creation = require("adopure.types.comment_create").CommentCreation:new(bufnr, mark_id, thread_context)
     table.insert(state.comment_creations, comment_creation)

@@ -34,6 +34,10 @@
 ---<
 ---     *new_thread*: Opens a window to write a comment on code selection.
 ---
+---     *suggested_edit*: Opens a new thread window prefilled with a
+---     ```suggestion block carrying the selected lines as the full
+---     replacement of the range; edit the block, then submit the comment.
+---
 ---     *existing_thread*: Opens a window with an existing comment thread.
 ---
 ---     *next_comment*: Jump to the next comment thread.
@@ -156,7 +160,7 @@ local subcommand_tbl = {
         end,
     },
     open = {
-        complete_args = { "quickfix", "thread_picker", "new_thread", "existing_thread", "next_comment", "prev_comment" },
+        complete_args = { "quickfix", "thread_picker", "new_thread", "suggested_edit", "existing_thread", "next_comment", "prev_comment" },
         impl = function(args)
             local sub_impl = {
                 quickfix = function(opts)
@@ -167,6 +171,9 @@ local subcommand_tbl = {
                 end,
                 new_thread = function(opts)
                     require("adopure.thread").new_thread_window(adopure.get_loaded_state(), opts)
+                end,
+                suggested_edit = function(opts)
+                    require("adopure.thread").suggest_window(adopure.get_loaded_state(), opts)
                 end,
                 existing_thread = function(opts)
                     require("adopure.thread").open_thread_window(adopure.get_loaded_state(), opts)
