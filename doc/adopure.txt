@@ -45,6 +45,10 @@ Opens specified argument in the editor.
 <
      *new_thread*: Opens a window to write a comment on code selection.
 
+     *suggested_edit*: Opens a new thread window prefilled with a
+     ```suggestion block carrying the selected lines as the full
+     replacement of the range; edit the block, then submit the comment.
+
      *existing_thread*: Opens a window with an existing comment thread.
 
      *next_comment*: Jump to the next comment thread.
@@ -152,7 +156,12 @@ adopure.Config                                                  *adopure.Config*
     Fields: ~
         {pat_token?}                (string)              Personal Access Token to access Azure DevOps.
                                                           If not provided, attempt to use AZURE_DEVOPS_EXT_PAT environment variable.
-                                                          If no environment variable is set, and no config is provided, the plugin will not work.
+                                                          If no environment variable and no config is set, requests are sent without
+                                                          an Authorization header; that only works when authentication is injected
+                                                          upstream (e.g. a corporate proxy adding Kerberos auth).
+        {proxy?}                    (string)              Optional proxy for all api calls, passed to curl as --proxy
+                                                          ("[protocol://]host[:port]"). The HTTPS_PROXY/HTTP_PROXY environment
+                                                          variables are honored by curl itself and need no configuration.
         {hl_groups?}                (adopure.Highlights)  Highlight groups to apply.
         {preferred_remotes?}        (string[])            List with preferred remotes to extract Azure DevOps context from.
                                                           Remotes are elected among the following options:
@@ -184,6 +193,28 @@ adopure.StateManager                                      *adopure.StateManager*
 M.new_thread_window({state}, {_})                          *M.new_thread_window*
     Opens a new comment thread window in the context of the selected text.
     Make a selection to comment on, then call this to open a window.
+
+    Parameters: ~
+        {state}  (adopure.AdoState)
+        {_}      (table)
+
+
+M.build_suggestion_prefill({selection})             *M.build_suggestion_prefill*
+    Builds the suggested-edit comment body for the selected lines.
+    The fenced block carries the full replacement of the anchored range;
+    an empty block proposes deletion. Edit the block before submitting.
+
+    Parameters: ~
+        {selection}  (string[])
+
+    Returns: ~
+        (string[])
+
+
+M.suggest_window({state}, {_})                                *M.suggest_window*
+    Opens a new comment thread window prefilled with a suggested edit for
+    the selected lines. Make a selection to suggest a replacement for, then
+    call this; edit the block and submit to create the thread.
 
     Parameters: ~
         {state}  (adopure.AdoState)

@@ -148,8 +148,9 @@ end
 
 ---Render new pull request thread
 ---@param selection string[]
+---@param prefill string[]|nil optional buffer content, e.g. a suggestion template
 ---@return number, number: bufnr, mark_id
-function M.render_new_thread(selection)
+function M.render_new_thread(selection, prefill)
     local bufnr = open_new_split("[adopure - new - " .. buffer_counter .. "]")
     local lines = {
         { { "Comment thread: ", "@text.strong" }, { "<new>", "@text.reference" } },
@@ -161,10 +162,13 @@ function M.render_new_thread(selection)
     end
     lines = add_prompt_lines(lines, "comment")
 
-    local mark_id = vim.api.nvim_buf_set_extmark(0, namespace, 0, 0, {
+    local mark_id = vim.api.nvim_buf_set_extmark(bufnr, namespace, 0, 0, {
         virt_lines = lines,
         virt_lines_above = true,
     })
+    if prefill then
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, prefill)
+    end
     rightsize_window()
     vim.cmd(":startinsert")
     return bufnr, mark_id
