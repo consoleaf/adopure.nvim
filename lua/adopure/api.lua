@@ -13,16 +13,28 @@ local headers = {
     ["Content-Type"] = "application/json",
 }
 
+---Extra curl options from config. `proxy` is passed through to curl as
+---`--proxy "[protocol://]host[:port]"`; proxy environment variables
+---(HTTPS_PROXY/HTTP_PROXY) are honored by curl itself and need no setting.
+---@return table
+local function get_curl_options()
+    local opts = {}
+    if config.proxy and config.proxy ~= "" then
+        opts.proxy = config.proxy
+    end
+    return opts
+end
+
 ---Get request from azure devops
 ---@param url string
 ---@param request_type string
 ---@return any|nil result, string|nil err
 local function get_azure_devops(url, request_type)
-    local ok, response = pcall(curl.request, {
+    local ok, response = pcall(curl.request, vim.tbl_extend("force", {
         url = url,
         method = "get",
         headers = headers,
-    })
+    }, get_curl_options()))
     if not ok or not response or response.status ~= 200 then
         local details = ""
         if response then
@@ -154,12 +166,12 @@ end
 ---@param request_type string
 ---@return any|nil result, string|nil err
 local function submit_azure_devops(url, http_verb, request_type, body)
-    local ok, response = pcall(curl.request, {
+    local ok, response = pcall(curl.request, vim.tbl_extend("force", {
         url = url,
         method = http_verb,
         headers = headers,
         body = vim.fn.json_encode(body),
-    })
+    }, get_curl_options()))
     if not ok or not response or response.status ~= 200 then
         local details = ""
         if response then

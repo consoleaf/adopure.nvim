@@ -6,6 +6,7 @@
 
 ---@class adopure.InternalConfig
 ---@field pat_token string|nil
+---@field proxy string|nil
 ---@field hl_groups adopure.InternalHighlights
 ---@field preferred_remotes string[]
 ---@field filter_my_pull_requests boolean
@@ -14,6 +15,7 @@ local InternalConfig = {}
 function InternalConfig:new()
     local default_config = {
         pat_token = os.getenv("AZURE_DEVOPS_EXT_PAT"),
+        proxy = nil,
         hl_groups = {
             active = "DiagnosticUnderlineWarn",
             active_sign = "@comment.todo",

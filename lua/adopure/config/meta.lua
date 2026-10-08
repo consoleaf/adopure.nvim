@@ -26,6 +26,10 @@
 ---If not provided, attempt to use AZURE_DEVOPS_EXT_PAT environment variable.
 ---If no environment variable is set, and no config is provided, the plugin will not work.
 ---@field pat_token? string Personal Access Token to access Azure DevOps.
+---Optional proxy for all api calls, passed to curl as --proxy
+---("[protocol://]host[:port]"). The HTTPS_PROXY/HTTP_PROXY environment
+---variables are honored by curl itself and need no configuration.
+---@field proxy? string
 ---@field hl_groups? adopure.Highlights Highlight groups to apply.
 ---List with preferred remotes to extract Azure DevOps context from.
 ---Remotes are elected among the following options:
