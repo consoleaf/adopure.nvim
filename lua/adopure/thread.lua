@@ -51,6 +51,26 @@ end
 ---Opens a new comment thread window in the context of the selected text.
 ---Make a selection to comment on, then call this to open a window.
 ---@param state adopure.AdoState
+---@param prefill string[]|nil
+local function open_new_thread_window(state, prefill)
+    local line_start, col_start, line_end, col_end = get_selected_position()
+    local selection = vim.api.nvim_buf_get_text(0, line_start, col_start, line_end, col_end, {})
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", false, true, true), "nx", false)
+    col_end = col_end + 1
+    if col_end == 0 then
+        col_end = 2147483647
+    end
+    local thread_context = get_thread_context(state, col_end, col_start, line_end, line_start)
+
+    local bufnr, mark_id = require("adopure.render").render_new_thread(selection, prefill)
+
+    local comment_creation = require("adopure.types.comment_create").CommentCreation:new(bufnr, mark_id, thread_context)
+    table.insert(state.comment_creations, comment_creation)
+end
+
+---Opens a new comment thread window in the context of the selected text.
+---Make a selection to comment on, then call this to open a window.
+---@param state adopure.AdoState
 ---@param _ table
 function M.new_thread_window(state, _)
     open_new_thread_window(state, nil)
@@ -79,25 +99,6 @@ function M.suggest_window(state, _)
     local line_start, col_start, line_end, col_end = get_selected_position()
     local selection = vim.api.nvim_buf_get_text(0, line_start, col_start, line_end, col_end, {})
     open_new_thread_window(state, M.build_suggestion_prefill(selection))
-end
-
----@private
----@param state adopure.AdoState
----@param prefill string[]|nil
-local function open_new_thread_window(state, prefill)
-    local line_start, col_start, line_end, col_end = get_selected_position()
-    local selection = vim.api.nvim_buf_get_text(0, line_start, col_start, line_end, col_end, {})
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", false, true, true), "nx", false)
-    col_end = col_end + 1
-    if col_end == 0 then
-        col_end = 2147483647
-    end
-    local thread_context = get_thread_context(state, col_end, col_start, line_end, line_start)
-
-    local bufnr, mark_id = require("adopure.render").render_new_thread(selection, prefill)
-
-    local comment_creation = require("adopure.types.comment_create").CommentCreation:new(bufnr, mark_id, thread_context)
-    table.insert(state.comment_creations, comment_creation)
 end
 
 ---@private
