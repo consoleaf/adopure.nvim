@@ -137,10 +137,11 @@ function M.render_reply_thread(pull_request_thread)
     end
     lines = add_prompt_lines(lines, "reply")
 
-    local mark_id = vim.api.nvim_buf_set_extmark(0, namespace, 0, 0, {
+    local mark_id = vim.api.nvim_buf_set_extmark(bufnr, namespace, 0, 0, {
         id = pull_request_thread.id,
         virt_lines = lines,
         virt_lines_above = true,
+        right_gravity = false,
     })
     rightsize_window()
     return bufnr, mark_id
@@ -165,6 +166,7 @@ function M.render_new_thread(selection, prefill)
     local mark_id = vim.api.nvim_buf_set_extmark(bufnr, namespace, 0, 0, {
         virt_lines = lines,
         virt_lines_above = true,
+        right_gravity = false,
     })
     if prefill then
         vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, prefill)

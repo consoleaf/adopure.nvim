@@ -4,7 +4,11 @@ INIT := $(CURDIR)/tests/minimal_init.lua
 # Offline specs runnable locally without an Azure DevOps PAT or `ado` git
 # remote (spec/load_spec.lua and spec/submit_spec.lua are integration tests
 # that need real credentials, see .github/workflows/tests.yml).
+<<<<<<< HEAD
 OFFLINE_SPECS := spec/config_spec.lua spec/api_spec.lua spec/git_remote_spec.lua spec/suggestion_spec.lua
+=======
+OFFLINE_SPECS := spec/render_spec.lua
+>>>>>>> fix/thread-virtual-text-anchor
 
 .PHONY: test
 test:
