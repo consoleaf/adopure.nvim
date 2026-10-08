@@ -31,12 +31,9 @@ function InternalConfig:new()
 end
 
 function InternalConfig:access_token()
-    local message = table.concat({
-        "No pat_token found in config.",
-        "Set AZURE_DEVOPS_EXT_PAT environment variable,",
-        "or check the docs to find other ways of configuring it.",
-    }, " ")
-    assert(self.pat_token, message)
+    if not self.pat_token then
+        return nil
+    end
     return vim.base64.encode(":" .. self.pat_token)
 end
 

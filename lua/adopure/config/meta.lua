@@ -24,7 +24,9 @@
 
 ---@class adopure.Config
 ---If not provided, attempt to use AZURE_DEVOPS_EXT_PAT environment variable.
----If no environment variable is set, and no config is provided, the plugin will not work.
+---If no environment variable and no config is set, requests are sent without
+---an Authorization header; that only works when authentication is injected
+---upstream (e.g. a corporate proxy adding Kerberos auth).
 ---@field pat_token? string Personal Access Token to access Azure DevOps.
 ---@field hl_groups? adopure.Highlights Highlight groups to apply.
 ---List with preferred remotes to extract Azure DevOps context from.
